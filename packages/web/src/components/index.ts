@@ -33,6 +33,7 @@ export { EventIcon } from './EventIcon';
 export { VirtualizedEventList } from './VirtualizedEventList';
 export { TimelineEmptyState } from './TimelineEmptyState';
 export { TimelineError } from './TimelineError';
+export { PipelineExecutionsPanel } from './PipelineExecutionsPanel';
 // Timeline components
 export { ReleaseTimeline } from './ReleaseTimeline';
 export { TimelineEvent } from './TimelineEvent';

@@ -4,12 +4,29 @@
  */
 
 import * as azdev from 'azure-devops-node-api';
-import { Branch, Tag, Build, WorkItem, BuildStatus } from '../domain/types';
+import { Branch, Tag, Build, WorkItem, BuildStatus, CIExecution } from '../domain/types';
 import { Result, Success, Failure } from '../common/result';
 import { IntegrationError, AuthenticationError } from '../common/errors';
 import { Cache } from '../data/cache';
 import { logger } from '../common/logger';
 import { CircuitBreaker } from './circuit-breaker';
+
+/**
+ * Map Azure DevOps build status/result to CIExecution status
+ */
+export function mapAzureBuildStatus(
+  status: string | undefined,
+  result: string | undefined
+): CIExecution['status'] {
+  if (status === 'notStarted') return 'pending';
+  if (status === 'inProgress') return 'running';
+  if (status === 'completed') {
+    if (result === 'succeeded') return 'passed';
+    return 'failed';
+  }
+  // Default for any unknown status
+  return 'failed';
+}
 
 /**
  * Azure DevOps authentication credentials
@@ -275,6 +292,75 @@ export class AzureDevOpsAdapter {
       } catch (error) {
         return Failure(new IntegrationError(
           `Failed to retrieve builds for pipeline ${pipelineId} and branch ${branch}`,
+          error as Error
+        ));
+      }
+    });
+  }
+  
+  /**
+   * Get pipeline builds across all branches for a pipeline ID
+   * Returns CIExecution records for display in the pipeline executions panel
+   * @param pipelineId Pipeline definition ID
+   * @returns Result with array of CI executions
+   */
+  async getPipelineBuilds(pipelineId: string): Promise<Result<CIExecution[], IntegrationError>> {
+    if (!this.connection) {
+      return Failure(new IntegrationError('Not authenticated. Call authenticate() first.'));
+    }
+    
+    // Check cache first
+    const cacheKey = `azure:pipelineBuilds:${pipelineId}`;
+    const cached = this.cache.get<CIExecution[]>(cacheKey);
+    if (cached) {
+      return Success(cached);
+    }
+    
+    return this.retryWithBackoff(async () => {
+      try {
+        const buildApi = await this.connection!.getBuildApi();
+        
+        const azureBuilds = await buildApi.getBuilds(
+          '', // project - empty string for all projects
+          [parseInt(pipelineId)],
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          100 // top: get up to 100 builds
+        );
+        
+        const executions: CIExecution[] = azureBuilds.map(build => ({
+          id: build.id?.toString() || '',
+          runNumber: build.buildNumber || '',
+          status: mapAzureBuildStatus(
+            build.status === 1 ? 'inProgress' :
+            build.status === 2 ? 'completed' :
+            build.status === 32 ? 'notStarted' : String(build.status ?? ''),
+            build.result === 2 ? 'succeeded' :
+            build.result === 4 ? 'partiallySucceeded' :
+            build.result === 8 ? 'failed' :
+            build.result === 32 ? 'canceled' : String(build.result ?? '')
+          ),
+          branch: build.sourceBranch?.replace('refs/heads/', '') || '',
+          commitSha: build.sourceVersion || '',
+          startedAt: build.startTime ? new Date(build.startTime).toISOString() : new Date().toISOString(),
+          ...(build.finishTime ? { completedAt: new Date(build.finishTime).toISOString() } : {})
+        }));
+        
+        // Cache the result
+        this.cache.set(cacheKey, executions, Cache.TTL_5_MINUTES);
+        
+        return Success(executions);
+      } catch (error) {
+        return Failure(new IntegrationError(
+          `Failed to retrieve pipeline builds for pipeline ${pipelineId}`,
           error as Error
         ));
       }

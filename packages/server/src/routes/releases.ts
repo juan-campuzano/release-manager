@@ -5,7 +5,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { Services } from '../services';
 import { ReleaseConfiguration, ReleaseStage, ReleaseStatus, Platform, EventType } from '../domain/types';
-import { NotFoundError } from '../common/errors';
+import { NotFoundError, IntegrationError } from '../common/errors';
 
 /**
  * Create release routes
@@ -73,6 +73,35 @@ export function createReleaseRoutes(services: Services): Router {
       const events = services.eventStore.getEventsByReleaseId(id, { limit, offset, types });
 
       res.json({ events });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Get pipeline executions for a release
+  router.get('/:id/pipeline-executions', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      if (!services.pipelineFetcher) {
+        res.json({ executions: [] });
+        return;
+      }
+
+      const result = await services.pipelineFetcher.getExecutions(id);
+
+      if (!result.success) {
+        if (result.error instanceof IntegrationError) {
+          res.status(502).json({
+            error: 'Integration Error',
+            message: result.error.message
+          });
+          return;
+        }
+        throw result.error;
+      }
+
+      res.json({ executions: result.value });
     } catch (error) {
       next(error);
     }

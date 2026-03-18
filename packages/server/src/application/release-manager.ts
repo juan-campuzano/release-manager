@@ -132,6 +132,7 @@ export class ReleaseManagerService {
           lastCheckedAt: new Date()
         },
         distributions: [],
+        ...(config.repositoryConfigId ? { repositoryConfigId: config.repositoryConfigId } : {}),
         createdAt: new Date(),
         updatedAt: new Date(),
         lastSyncedAt: new Date()

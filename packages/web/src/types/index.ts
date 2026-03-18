@@ -43,6 +43,9 @@ export interface Release {
   qualityThresholds: QualityThresholds;
   rolloutStages: number[];
   
+  // Repository configuration reference
+  repositoryConfigId?: string;
+
   // Timestamps
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
@@ -58,6 +61,9 @@ export interface ReleaseConfig {
   requiredSquads: string[];
   qualityThresholds: QualityThresholds;
   rolloutStages: number[];
+  repositoryConfigId?: string;
+  ciPipelineId?: string;
+  analyticsProjectId?: string;
 }
 
 // ============================================================================
@@ -224,4 +230,19 @@ export interface HistoryFilters {
   status?: ReleaseStatus;
   startDate?: string; // ISO 8601
   endDate?: string; // ISO 8601
+}
+
+// ============================================================================
+// CI Execution Types
+// ============================================================================
+
+export interface CIExecution {
+  id: string;
+  runNumber: string;
+  status: 'pending' | 'running' | 'passed' | 'failed';
+  branch: string;
+  commitSha: string;
+  startedAt: string;       // ISO 8601
+  completedAt?: string;    // ISO 8601
+  url?: string;            // Link to the CI execution
 }

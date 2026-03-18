@@ -12,6 +12,7 @@ interface BuildInfoFormProps {
     latestPassingBuild?: string;
     latestAppStoreBuild?: string;
   }) => Promise<void>;
+  hasCiPipeline?: boolean;
 }
 
 export function BuildInfoForm({
@@ -20,6 +21,7 @@ export function BuildInfoForm({
   latestPassingBuild,
   latestAppStoreBuild,
   onUpdate,
+  hasCiPipeline = false,
 }: BuildInfoFormProps) {
   const [build, setBuild] = useState(latestBuild);
   const [passingBuild, setPassingBuild] = useState(latestPassingBuild);
@@ -47,6 +49,12 @@ export function BuildInfoForm({
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       <h3 className={styles.title}>Update Build Information</h3>
+      {hasCiPipeline && (
+        <div className={styles.autoFetchNotice} role="status">
+          <span className={styles.autoFetchIcon} aria-hidden="true">ℹ</span>
+          Build information is being auto-fetched from the CI pipeline.
+        </div>
+      )}
       <div className={styles.fields}>
         <div className={styles.field}>
           <label htmlFor={`build-${releaseId}`} className={styles.label}>Latest Build</label>

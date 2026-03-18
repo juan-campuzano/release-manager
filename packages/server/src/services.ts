@@ -10,6 +10,7 @@ import { ReleaseStore } from './data/release-store';
 import { HistoryStore } from './data/history-store';
 import { MockDataProvider } from './data/mock-data-provider';
 import { Cache } from './data/cache';
+import { ConfigStore } from './data/config-store';
 import { EventStore } from './services/eventStore';
 import { GitHubAdapter } from './integration';
 import { AzureDevOpsAdapter } from './integration';
@@ -19,6 +20,7 @@ import { createConnection, getDefaultConfig } from './data/database-config';
 import { Release, Platform } from './domain/types';
 import { Success, Failure } from './common/result';
 import { ApplicationError } from './common/errors';
+import { PipelineFetcher } from './services/pipeline-fetcher';
 
 /**
  * Application services container
@@ -29,6 +31,8 @@ export interface Services {
   pollingService: PollingService;
   cache: Cache;
   eventStore: EventStore;
+  pipelineFetcher: PipelineFetcher;
+  configStore: ConfigStore;
 }
 
 /**
@@ -69,6 +73,18 @@ export function initializeServices(): Services {
   const azureAdapter = new AzureDevOpsAdapter(cache);
   const metricsCollector = new MetricsCollector(cache);
 
+  // Authenticate GitHub adapter if token is available
+  const githubToken = process.env.GITHUB_TOKEN;
+  if (githubToken) {
+    githubAdapter.authenticate({ token: githubToken }).then(result => {
+      if (result.success) {
+        console.log('[Server] GitHub adapter authenticated successfully');
+      } else {
+        console.error('[Server] GitHub adapter authentication failed:', result.error.message);
+      }
+    });
+  }
+
   // Initialize core services
   const releaseManager = new ReleaseManagerService({
     releaseStore,
@@ -90,12 +106,23 @@ export function initializeServices(): Services {
     {} // Empty config to use defaults
   );
 
+  // Initialize config store and pipeline fetcher
+  const configStore = new ConfigStore();
+  const pipelineFetcher = new PipelineFetcher(
+    releaseStore,
+    configStore,
+    githubAdapter,
+    azureAdapter
+  );
+
   return {
     releaseManager,
     metricsAggregator,
     pollingService,
     cache,
-    eventStore
+    eventStore,
+    pipelineFetcher,
+    configStore
   };
 }
 

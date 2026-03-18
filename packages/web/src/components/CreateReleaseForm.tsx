@@ -155,6 +155,9 @@ export function CreateReleaseForm({ onSubmit, isSubmitting }: CreateReleaseFormP
         cpuExceptionRateThreshold: data.cpuExceptionRateThreshold,
       },
       rolloutStages,
+      ...(selectedConfigId ? { repositoryConfigId: selectedConfigId } : {}),
+      ...(data.ciPipelineId ? { ciPipelineId: data.ciPipelineId } : {}),
+      ...(data.analyticsProjectId ? { analyticsProjectId: data.analyticsProjectId } : {}),
     };
 
     await onSubmit(config);

@@ -4,12 +4,29 @@
  */
 
 import { Octokit } from '@octokit/rest';
-import { Branch, Tag, Commit } from '../domain/types';
+import { Branch, Tag, Commit, CIExecution } from '../domain/types';
 import { Result, Success, Failure } from '../common/result';
 import { IntegrationError, AuthenticationError } from '../common/errors';
 import { Cache } from '../data/cache';
 import { logger } from '../common/logger';
 import { CircuitBreaker } from './circuit-breaker';
+
+/**
+ * Map GitHub Actions workflow run status/conclusion to CIExecution status
+ */
+export function mapGitHubRunStatus(
+  status: string,
+  conclusion: string | null | undefined
+): CIExecution['status'] {
+  if (status === 'queued') return 'pending';
+  if (status === 'in_progress') return 'running';
+  if (status === 'completed') {
+    if (conclusion === 'success') return 'passed';
+    return 'failed';
+  }
+  // Default for any unknown status
+  return 'failed';
+}
 
 /**
  * GitHub authentication credentials
@@ -235,6 +252,74 @@ export class GitHubAdapter {
         ));
       }
     });
+  }
+  
+  /**
+   * Get workflow runs for a GitHub Actions workflow
+   * @param repository Repository in format "owner/repo"
+   * @param workflowId Workflow ID or filename
+   * @returns Result with array of CI executions
+   */
+  async getWorkflowRuns(
+    repository: string,
+    workflowId: string,
+    branch?: string
+  ): Promise<Result<CIExecution[], IntegrationError>> {
+    if (!this.octokit) {
+      return Failure(new IntegrationError('Not authenticated. Call authenticate() first.'));
+    }
+    
+    // Check cache first
+    const cacheKey = `github:workflowRuns:${repository}:${workflowId}${branch ? `:${branch}` : ''}`;
+    const cached = this.cache.get<CIExecution[]>(cacheKey);
+    if (cached) {
+      logger.info('Returning cached GitHub workflow runs', { repository, workflowId, branch, count: cached.length });
+      return Success(cached);
+    }
+    
+    return this.circuitBreaker.execute(
+      async () => this.retryWithBackoff(async () => {
+        try {
+          logger.info('Fetching GitHub workflow runs', { repository, workflowId, branch });
+          const [owner, repo] = this.parseRepository(repository);
+          
+          const response = await this.octokit!.actions.listWorkflowRuns({
+            owner,
+            repo,
+            workflow_id: workflowId,
+            ...(branch ? { branch } : {}),
+            per_page: 100
+          });
+          
+          const executions: CIExecution[] = response.data.workflow_runs.map(run => ({
+            id: String(run.id),
+            runNumber: String(run.run_number),
+            status: mapGitHubRunStatus(run.status ?? '', run.conclusion),
+            branch: run.head_branch || '',
+            commitSha: run.head_sha,
+            startedAt: run.run_started_at || run.created_at,
+            ...(run.updated_at && run.status === 'completed' ? { completedAt: run.updated_at } : {}),
+            url: run.html_url
+          }));
+          
+          // Cache the result
+          this.cache.set(cacheKey, executions, Cache.TTL_5_MINUTES);
+          
+          logger.info('Successfully fetched GitHub workflow runs', { repository, workflowId, count: executions.length });
+          return Success(executions);
+        } catch (error) {
+          logger.error('Failed to fetch GitHub workflow runs', error as Error, { repository, workflowId });
+          return Failure(new IntegrationError(
+            `Failed to retrieve workflow runs for ${repository} workflow ${workflowId}`,
+            error as Error
+          ));
+        }
+      }),
+      () => {
+        logger.warn('Circuit breaker open, returning cached GitHub workflow runs', { repository, workflowId });
+        return Success(cached || []);
+      }
+    );
   }
   
   /**

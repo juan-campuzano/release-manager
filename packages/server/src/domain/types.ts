@@ -155,6 +155,9 @@ export interface Release {
   // Distribution
   distributions: Distribution[];
   
+  // Repository configuration reference
+  repositoryConfigId?: string;
+  
   // Metadata
   createdAt: Date;
   updatedAt: Date;
@@ -182,6 +185,9 @@ export interface ReleaseConfiguration {
   
   // Rollout configuration
   rolloutStages: number[];
+  
+  // Repository configuration reference
+  repositoryConfigId?: string;
   
   // Integration settings
   ciPipelineId?: string;
@@ -239,6 +245,20 @@ export interface Build {
   commit: string;
   startedAt: Date;
   completedAt?: Date;
+}
+
+/**
+ * CI pipeline execution from GitHub Actions or Azure Pipelines
+ */
+export interface CIExecution {
+  id: string;
+  runNumber: string;
+  status: 'pending' | 'running' | 'passed' | 'failed';
+  branch: string;
+  commitSha: string;
+  startedAt: string;       // ISO 8601
+  completedAt?: string;    // ISO 8601
+  url?: string;            // Link to the CI execution
 }
 
 /**

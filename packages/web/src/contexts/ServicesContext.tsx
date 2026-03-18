@@ -4,6 +4,7 @@ import { ReleaseService } from '../services/ReleaseService';
 import { MetricsService } from '../services/MetricsService';
 import { HealthService } from '../services/HealthService';
 import { ConfigService } from '../services/ConfigService';
+import { PipelineExecutionService } from '../services/PipelineExecutionService';
 
 /**
  * Services available through context
@@ -14,6 +15,7 @@ export interface Services {
   metricsService: MetricsService;
   healthService: HealthService;
   configService: ConfigService;
+  pipelineExecutionService: PipelineExecutionService;
 }
 
 /**
@@ -43,6 +45,7 @@ export function ServicesProvider({ children }: ServicesProviderProps): JSX.Eleme
       metricsService: new MetricsService(apiClient),
       healthService: new HealthService(apiClient),
       configService: new ConfigService(apiClient),
+      pipelineExecutionService: new PipelineExecutionService(apiClient),
     };
   }, []);
 
