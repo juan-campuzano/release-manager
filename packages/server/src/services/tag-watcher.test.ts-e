@@ -1,0 +1,309 @@
+/**
+ * Unit tests for TagWatcher service.
+ * Covers subscriber wiring (start/stop) and notification handling.
+ */
+
+import { TagWatcher, TagWatcherConfig } from './tag-watcher';
+import { DataChangeNotification } from '../integration/polling-service';
+import { Tag } from '../domain/types';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function createMockLogger() {
+  return {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    critical: jest.fn(),
+    getRecentLogs: jest.fn().mockReturnValue([]),
+    getLogsByLevel: jest.fn().mockReturnValue([]),
+    clearLogs: jest.fn(),
+  } as any;
+}
+
+interface MockPollingService {
+  subscribe: jest.Mock;
+  _notify(notification: DataChangeNotification): void;
+  _subscriberCount(): number;
+}
+
+function createMockPollingService(): MockPollingService {
+  const subscribers = new Set<(n: DataChangeNotification) => void>();
+  return {
+    subscribe: jest.fn((cb: (n: DataChangeNotification) => void) => {
+      subscribers.add(cb);
+      return () => { subscribers.delete(cb); };
+    }),
+    _notify(notification: DataChangeNotification) {
+      for (const cb of subscribers) cb(notification);
+    },
+    _subscriberCount() { return subscribers.size; },
+  };
+}
+
+function createMockConfig(overrides: Record<string, any> = {}) {
+  return {
+    releaseStore: {} as any,
+    releaseManager: {} as any,
+    stateManager: {} as any,
+    eventStore: {} as any,
+    pollingService: createMockPollingService(),
+    githubAdapter: {} as any,
+    azureAdapter: { getTags: jest.fn() } as any,
+    logger: createMockLogger(),
+    ...overrides,
+  };
+}
+
+function makeTags(...names: string[]): Tag[] {
+  return names.map((name) => ({
+    name,
+    commit: 'abc123',
+    message: '',
+    createdAt: new Date(),
+  }));
+}
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
+describe('TagWatcher', () => {
+  describe('start / stop subscriber wiring', () => {
+    it('should subscribe to PollingService on start()', () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+
+      expect(config.pollingService.subscribe).toHaveBeenCalledTimes(1);
+      expect(config.pollingService.subscribe).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    it('should not subscribe twice if start() is called again', () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+      watcher.start();
+
+      expect(config.pollingService.subscribe).toHaveBeenCalledTimes(1);
+    });
+
+    it('should unsubscribe from PollingService on stop()', () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+      expect(config.pollingService._subscriberCount()).toBe(1);
+
+      watcher.stop();
+      expect(config.pollingService._subscriberCount()).toBe(0);
+    });
+
+    it('should be safe to call stop() without start()', () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      expect(() => watcher.stop()).not.toThrow();
+    });
+
+    it('should allow re-subscribing after stop()', () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+      watcher.stop();
+      watcher.start();
+
+      expect(config.pollingService.subscribe).toHaveBeenCalledTimes(2);
+      expect(config.pollingService._subscriberCount()).toBe(1);
+    });
+  });
+
+  describe('handlePollingNotification — GitHub', () => {
+    it('should extract tags from GitHub notification data.tags', async () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+      const tags = makeTags('v1.0.0', 'v2.0.0');
+
+      const notification: DataChangeNotification = {
+        type: 'github',
+        identifier: 'owner/repo',
+        timestamp: new Date(),
+        data: { branches: [], tags },
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.logger.info).toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.objectContaining({ type: 'github', tagCount: 2 }),
+      );
+    });
+
+    it('should handle GitHub notification with missing tags gracefully', async () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      const notification: DataChangeNotification = {
+        type: 'github',
+        identifier: 'owner/repo',
+        timestamp: new Date(),
+        data: { branches: [] },
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.logger.warn).toHaveBeenCalledWith(
+        'GitHub notification missing tags data',
+        expect.objectContaining({ identifier: 'owner/repo' }),
+      );
+      expect(config.logger.info).toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.objectContaining({ tagCount: 0 }),
+      );
+    });
+
+    it('should handle GitHub notification with null data', async () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      const notification: DataChangeNotification = {
+        type: 'github',
+        identifier: 'owner/repo',
+        timestamp: new Date(),
+        data: null,
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.logger.warn).toHaveBeenCalled();
+    });
+  });
+
+  describe('handlePollingNotification — Azure', () => {
+    it('should call azureAdapter.getTags for Azure notifications', async () => {
+      const tags = makeTags('v3.0.0');
+      const config = createMockConfig();
+      (config.azureAdapter.getTags as jest.Mock).mockResolvedValue({
+        success: true,
+        value: tags,
+      });
+      const watcher = new TagWatcher(config);
+
+      const notification: DataChangeNotification = {
+        type: 'azure',
+        identifier: 'project/repo',
+        timestamp: new Date(),
+        data: { buildStatus: {}, newBuilds: [] },
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.azureAdapter.getTags).toHaveBeenCalledWith('project/repo');
+      expect(config.logger.info).toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.objectContaining({ type: 'azure', tagCount: 1 }),
+      );
+    });
+
+    it('should log error and return when Azure getTags fails', async () => {
+      const config = createMockConfig();
+      (config.azureAdapter.getTags as jest.Mock).mockResolvedValue({
+        success: false,
+        error: { message: 'Network error' },
+      });
+      const watcher = new TagWatcher(config);
+
+      const notification: DataChangeNotification = {
+        type: 'azure',
+        identifier: 'project/repo',
+        timestamp: new Date(),
+        data: {},
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.logger.error).toHaveBeenCalledWith(
+        'Failed to fetch Azure DevOps tags',
+        undefined,
+        expect.objectContaining({ identifier: 'project/repo' }),
+      );
+      // Should NOT log the "received tags" message since we returned early
+      expect(config.logger.info).not.toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.anything(),
+      );
+    });
+  });
+
+  describe('handlePollingNotification — metrics (ignored)', () => {
+    it('should ignore metrics notifications', async () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      const notification: DataChangeNotification = {
+        type: 'metrics',
+        identifier: 'release-1',
+        timestamp: new Date(),
+        data: {},
+      };
+
+      await watcher.handlePollingNotification(notification);
+
+      expect(config.logger.info).not.toHaveBeenCalled();
+      expect(config.azureAdapter.getTags).toBeUndefined; // not called
+    });
+  });
+
+  describe('subscriber integration', () => {
+    it('should invoke handlePollingNotification when PollingService notifies', async () => {
+      const tags = makeTags('v1.0.0');
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+
+      const notification: DataChangeNotification = {
+        type: 'github',
+        identifier: 'owner/repo',
+        timestamp: new Date(),
+        data: { branches: [], tags },
+      };
+
+      // Notify through the mock polling service
+      config.pollingService._notify(notification);
+
+      // Give the async handler a tick to complete
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(config.logger.info).toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.objectContaining({ type: 'github', tagCount: 1 }),
+      );
+    });
+
+    it('should not receive notifications after stop()', async () => {
+      const config = createMockConfig();
+      const watcher = new TagWatcher(config);
+
+      watcher.start();
+      watcher.stop();
+
+      const notification: DataChangeNotification = {
+        type: 'github',
+        identifier: 'owner/repo',
+        timestamp: new Date(),
+        data: { branches: [], tags: makeTags('v1.0.0') },
+      };
+
+      config.pollingService._notify(notification);
+      await new Promise((r) => setTimeout(r, 10));
+
+      // The "received tags" info log should NOT have been called
+      expect(config.logger.info).not.toHaveBeenCalledWith(
+        'TagWatcher received tags',
+        expect.anything(),
+      );
+    });
+  });
+});

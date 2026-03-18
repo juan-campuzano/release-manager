@@ -21,6 +21,9 @@ import { Release, Platform } from './domain/types';
 import { Success, Failure } from './common/result';
 import { ApplicationError } from './common/errors';
 import { PipelineFetcher } from './services/pipeline-fetcher';
+import { TagWatcher } from './services/tag-watcher';
+import { ProcessedTagStore } from './services/processed-tag-store';
+import { Logger } from './common/logger';
 
 /**
  * Application services container
@@ -33,6 +36,7 @@ export interface Services {
   eventStore: EventStore;
   pipelineFetcher: PipelineFetcher;
   configStore: ConfigStore;
+  tagWatcher: TagWatcher;
 }
 
 /**
@@ -79,6 +83,8 @@ export function initializeServices(): Services {
     githubAdapter.authenticate({ token: githubToken }).then(result => {
       if (result.success) {
         console.log('[Server] GitHub adapter authenticated successfully');
+        // Start polling after authentication succeeds
+        startRepositoryPolling(releaseStore, pollingService);
       } else {
         console.error('[Server] GitHub adapter authentication failed:', result.error.message);
       }
@@ -115,6 +121,22 @@ export function initializeServices(): Services {
     azureAdapter
   );
 
+  // Initialize tag watcher for automatic version tag detection
+  const processedTagStore = new ProcessedTagStore();
+  const tagWatcherLogger = new Logger();
+  const tagWatcher = new TagWatcher({
+    releaseStore,
+    releaseManager,
+    stateManager,
+    eventStore,
+    pollingService,
+    githubAdapter,
+    azureAdapter,
+    processedTagStore,
+    logger: tagWatcherLogger
+  });
+  tagWatcher.start();
+
   return {
     releaseManager,
     metricsAggregator,
@@ -122,7 +144,8 @@ export function initializeServices(): Services {
     cache,
     eventStore,
     pipelineFetcher,
-    configStore
+    configStore,
+    tagWatcher
   };
 }
 
@@ -182,4 +205,44 @@ function createHistoryStoreAdapter(mockProvider: MockDataProvider): any {
       return mockProvider.getHistory(filters);
     }
   };
+}
+
+/**
+ * Start polling for repositories associated with active releases.
+ * Queries active releases and starts GitHub/Azure polling for each unique repository.
+ */
+async function startRepositoryPolling(
+  releaseStore: ReleaseStore,
+  pollingService: PollingService
+): Promise<void> {
+  try {
+    const result = await releaseStore.getActiveReleases();
+    if (!result.success) {
+      console.error('[Server] Failed to fetch active releases for polling:', result.error);
+      return;
+    }
+
+    const seen = new Set<string>();
+    for (const release of result.value) {
+      if (!release.repositoryUrl || !release.sourceType) continue;
+
+      const key = `${release.sourceType}:${release.repositoryUrl}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      if (release.sourceType === 'github') {
+        // Extract "owner/repo" from the full URL
+        const match = release.repositoryUrl.match(/github\.com\/(.+?)(?:\.git)?$/);
+        if (match) {
+          pollingService.startGitHubPolling(match[1]);
+          console.log(`[Server] Started GitHub polling for ${match[1]}`);
+        }
+      } else if (release.sourceType === 'azure') {
+        pollingService.startAzurePolling(release.repositoryUrl);
+        console.log(`[Server] Started Azure polling for ${release.repositoryUrl}`);
+      }
+    }
+  } catch (error) {
+    console.error('[Server] Error starting repository polling:', error);
+  }
 }

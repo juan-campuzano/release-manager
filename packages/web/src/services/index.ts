@@ -3,3 +3,4 @@ export { ReleaseService } from './ReleaseService';
 export { MetricsService } from './MetricsService';
 export { HealthService } from './HealthService';
 export { ConfigService } from './ConfigService';
+export { TagStatusService } from './TagStatusService';

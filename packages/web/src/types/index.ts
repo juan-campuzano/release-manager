@@ -246,3 +246,13 @@ export interface CIExecution {
   completedAt?: string;    // ISO 8601
   url?: string;            // Link to the CI execution
 }
+
+// ============================================================================
+// Tag Detection Types
+// ============================================================================
+
+export interface TagDetectionInfo {
+  active: boolean;
+  lastDetectedTag: string | null;
+  lastCheckAt: string | null;
+}

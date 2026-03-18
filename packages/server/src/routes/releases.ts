@@ -107,6 +107,17 @@ export function createReleaseRoutes(services: Services): Router {
     }
   });
 
+  // Get tag detection status for a release
+  router.get('/:id/tag-status', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const tagStatus = await services.tagWatcher.getTagStatus(id);
+      res.json({ tagStatus });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Get a specific release
   router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {

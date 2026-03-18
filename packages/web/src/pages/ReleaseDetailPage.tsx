@@ -8,7 +8,9 @@ import { StageControl } from '../components/StageControl';
 import { PipelineExecutionsPanel } from '../components/PipelineExecutionsPanel';
 import { ReleaseTimeline } from '../components/ReleaseTimeline';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { TagDetectionStatus } from '../components/TagDetectionStatus';
 import { useRelease } from '../hooks/useRelease';
+import { useTagStatus } from '../hooks/useTagStatus';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useServices } from '../contexts/ServicesContext';
 import type { ReleaseStage, RepositoryConfig } from '../types';
@@ -16,8 +18,22 @@ import styles from './ReleaseDetailPage.module.css';
 
 export function ReleaseDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { releaseService, configService } = useServices();
+  const { releaseService, configService, tagStatusService } = useServices();
   const { release, isLoading, error, refresh } = useRelease(id!, releaseService);
+
+  // Determine if tag watching is active based on release configuration
+  const isTagWatchingActive = !!(
+    release?.repositoryUrl &&
+    release.repositoryUrl.length > 0 &&
+    (release.sourceType === 'github' || release.sourceType === 'azure')
+  );
+
+  const {
+    tagStatus,
+    isLoading: isTagStatusLoading,
+    error: tagStatusError,
+    refresh: refreshTagStatus,
+  } = useTagStatus(id!, tagStatusService, isTagWatchingActive);
 
   const [hasCiPipeline, setHasCiPipeline] = useState(false);
   const [pipelineRefreshTrigger, setPipelineRefreshTrigger] = useState(0);
@@ -54,8 +70,9 @@ export function ReleaseDetailPage() {
 
   const handleRefresh = useCallback(() => {
     refresh();
+    refreshTagStatus();
     setPipelineRefreshTrigger((prev) => prev + 1);
-  }, [refresh]);
+  }, [refresh, refreshTagStatus]);
 
   // Auto-refresh every 30 seconds
   useAutoRefresh(refresh, { interval: 30000, enabled: !isLoading && !error });
@@ -112,6 +129,12 @@ export function ReleaseDetailPage() {
       </div>
 
       <ReleaseInfo release={release} />
+
+      <TagDetectionStatus
+        tagStatus={tagStatus}
+        isLoading={isTagStatusLoading}
+        error={tagStatusError}
+      />
 
       {hasCiPipeline && (
         <PipelineExecutionsPanel
