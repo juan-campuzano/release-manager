@@ -1,0 +1,40 @@
+/**
+ * TimelineError styles
+ * Requirements: 2.3
+ */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.message {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #d32f2f;
+}
+
+.retryButton {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background-color: #1976d2;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.retryButton:hover {
+  background-color: #1565c0;
+}
+
+.retryButton:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}

@@ -1,0 +1,100 @@
+.container {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.statusItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.compliant {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.nonCompliant {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.complete {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.incomplete {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.detailsLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.detailsText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: right;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+@media (max-width: 767px) {
+  .statusGrid {
+    grid-template-columns: 1fr;
+  }
+}

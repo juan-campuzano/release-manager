@@ -1,0 +1,198 @@
+/**
+ * TimelineEvent styles
+ *
+ * Layout: icon + vertical connector line on the left, content on the right
+ * Desktop: 16px padding, 24px gap
+ * Mobile: 12px padding, 16px gap
+ * Vertical line: 2px width, positioned at icon center
+ *
+ * Requirements: 1.3, 1.4, 11.1, 11.2, 13.2, 13.3, 13.4
+ */
+
+.event {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding: 16px;
+}
+
+/* Vertical connector line */
+.connector {
+  position: absolute;
+  top: 48px;
+  left: 31px; /* icon center: padding(16) + icon(32)/2 - line(2)/2 */
+  bottom: -24px;
+  width: 2px;
+  background-color: #e5e7eb;
+}
+
+.connectorHidden {
+  display: none;
+}
+
+/* Left column: icon */
+.iconColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* Right column: content */
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Header row: toggle button with timestamp + description */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  width: calc(100% + 16px);
+  min-height: 44px;
+  font: inherit;
+  color: inherit;
+}
+
+.toggleButton:hover {
+  background-color: #f9fafb;
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.expandIndicator {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  transition: transform 0.15s ease;
+}
+
+.expandIndicatorOpen {
+  transform: rotate(90deg);
+}
+
+/* Expanded details panel */
+.details {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.8125rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.detailRow {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.detailLabel {
+  font-weight: 600;
+  color: #6b7280;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.detailValue {
+  color: #111827;
+  word-break: break-word;
+}
+
+.detailLink {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.detailLink:hover {
+  color: #2563eb;
+}
+
+/* Creation event distinct style */
+.creationEvent {
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  background-color: #f0f7ff;
+}
+
+/* ARIA live region - visually hidden */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Responsive: mobile ---- */
+
+@media (max-width: 767px) {
+  .event {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .connector {
+    left: 23px; /* padding(12) + icon(24)/2 - line(2)/2 */
+    top: 36px;
+    bottom: -16px;
+  }
+
+  .timestamp {
+    font-size: 0.6875rem;
+  }
+
+  .description {
+    font-size: 0.8125rem;
+  }
+
+  .details {
+    padding: 8px;
+    font-size: 0.75rem;
+  }
+
+  .detailLabel {
+    min-width: 64px;
+  }
+}

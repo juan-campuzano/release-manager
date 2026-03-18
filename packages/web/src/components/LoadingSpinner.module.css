@@ -1,0 +1,52 @@
+/**
+ * LoadingSpinner styles
+ * 
+ * Provides loading spinner with size variants
+ * Requirements: 16.5, 16.6, 20.5
+ */
+
+.spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border-style: solid;
+  border-color: currentColor;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+.small {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+.medium {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 3px;
+}
+
+.large {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-width: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Visually hidden but accessible to screen readers */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

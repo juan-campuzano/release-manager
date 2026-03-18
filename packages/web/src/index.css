@@ -1,0 +1,87 @@
+/**
+ * Global styles with responsive design
+ * 
+ * Mobile-first approach with breakpoints:
+ * - Mobile: 320px - 767px
+ * - Tablet: 768px - 1023px
+ * - Desktop: 1024px+
+ * 
+ * Requirements: 17.1, 17.2, 17.3, 17.4, 17.5
+ */
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: #213547;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Base font size for rem calculations */
+  font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* Ensure all interactive elements meet minimum touch target size on mobile */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mobile styles (default) */
+@media (max-width: 767px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+/* Tablet styles */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    font-size: 15px;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 1024px) {
+  :root {
+    font-size: 16px;
+  }
+}

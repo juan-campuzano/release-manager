@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Manager Tool - Demo Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .dashboard {
+            display: grid;
+            gap: 20px;
+        }
+
+        .release-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .release-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .platform-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .platform-ios {
+            background: #007AFF;
+            color: white;
+        }
+
+        .platform-android {
+            background: #3DDC84;
+            color: white;
+        }
+
+        .platform-desktop {
+            background: #5856D6;
+            color: white;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-healthy {
+            background: #34C759;
+        }
+
+        .status-warning {
+            background: #FF9500;
+        }
+
+        .status-blocked {
+            background: #FF3B30;
+        }
+
+        .release-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+        }
+
+        .stage-indicator {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .stage-completed {
+            background: #34C759;
+        }
+
+        .stage-current {
+            background: #007AFF;
+            animation: pulse 2s infinite;
+        }
+
+        .stage-pending {
+            background: #E5E5EA;
+            color: #999;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .stage-label {
+            font-size: 11px;
+            text-align: center;
+            color: #666;
+        }
+
+        .connector {
+            width: 40px;
+            height: 2px;
+            background: #E5E5EA;
+        }
+
+        .connector-completed {
+            background: #34C759;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #E5E5EA;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .api-info {
+            background: #f8f9fa;
+            border-left: 4px solid #007AFF;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .api-info h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .api-info code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .api-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Release Manager Tool</h1>
+        <p class="subtitle">Monitor and manage software releases across multiple platforms</p>
+    </div>
+
+    <div class="dashboard">
+        <!-- iOS Release Card -->
+        <div class="release-card">
+            <div class="release-header">
+                <div>
+                    <span class="platform-badge platform-ios">iOS</span>
+                    <span style="margin-left: 10px; font-weight: 600;">v2.5.0</span>
+                </div>
+                <div>
+                    <span class="status-indicator status-healthy"></span>
+                    <span style="font-size: 14px; color: #666;">Healthy</span>
+                </div>
+            </div>
+
+            <div class="pipeline">
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">Release Branching</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">Final RC</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-current">→</div>
+                    <div class="stage-label">App Store Review</div>
+                </div>
+                <div class="connector"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-pending">1%</div>
+                    <div class="stage-label">Roll Out 1%</div>
+                </div>
+                <div class="connector"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-pending">100%</div>
+                    <div class="stage-label">Roll Out 100%</div>
+                </div>
+            </div>
+
+            <div class="release-info">
+                <div class="info-item">
+                    <div class="info-label">Branch</div>
+                    <div class="info-value">release/2.5.0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Latest Build</div>
+                    <div class="info-value">#1234</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Blockers</div>
+                    <div class="info-value">0 active</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Sign-Offs</div>
+                    <div class="info-value">3/3 approved</div>
+                </div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" style="color: #34C759;">0.3%</div>
+                    <div class="metric-label">Crash Rate</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" style="color: #34C759;">0.1%</div>
+                    <div class="metric-label">CPU Exceptions</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">0%</div>
+                    <div class="metric-label">Rollout</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">125K</div>
+                    <div class="metric-label">DAU</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Android Release Card -->
+        <div class="release-card">
+            <div class="release-header">
+                <div>
+                    <span class="platform-badge platform-android">Android</span>
+                    <span style="margin-left: 10px; font-weight: 600;">v2.4.8</span>
+                </div>
+                <div>
+                    <span class="status-indicator status-warning"></span>
+                    <span style="font-size: 14px; color: #666;">Warning</span>
+                </div>
+            </div>
+
+            <div class="pipeline">
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">Release Branching</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">Final RC</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">App Store Review</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-completed">✓</div>
+                    <div class="stage-label">Roll Out 1%</div>
+                </div>
+                <div class="connector connector-completed"></div>
+                <div class="stage">
+                    <div class="stage-indicator stage-current">→</div>
+                    <div class="stage-label">Roll Out 100%</div>
+                </div>
+            </div>
+
+            <div class="release-info">
+                <div class="info-item">
+                    <div class="info-label">Branch</div>
+                    <div class="info-value">release/2.4.8</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Latest Build</div>
+                    <div class="info-value">#5678</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Blockers</div>
+                    <div class="info-value">1 active</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Sign-Offs</div>
+                    <div class="info-value">3/3 approved</div>
+                </div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" style="color: #FF9500;">1.2%</div>
+                    <div class="metric-label">Crash Rate</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" style="color: #34C759;">0.2%</div>
+                    <div class="metric-label">CPU Exceptions</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">50%</div>
+                    <div class="metric-label">Rollout</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">245K</div>
+                    <div class="metric-label">DAU</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Information -->
+        <div class="api-info">
+            <h3>📡 This is a Demo UI</h3>
+            <p style="margin-bottom: 10px;">The actual application is a REST API backend. To interact with real data:</p>
+            
+            <p><strong>1. Start the server:</strong></p>
+            <pre>npm run build && npm start</pre>
+
+            <p style="margin-top: 15px;"><strong>2. Create a release via API:</strong></p>
+            <pre>curl -X POST http://localhost:3000/api/releases \
+  -H "Content-Type: application/json" \
+  -d '{
+    "platform": "iOS",
+    "version": "1.0.0",
+    "branchName": "release/1.0.0",
+    "repositoryUrl": "https://github.com/your-org/repo",
+    "sourceType": "github",
+    "requiredSquads": ["mobile", "qa"],
+    "qualityThresholds": {
+      "crashRateThreshold": 1.0,
+      "cpuExceptionRateThreshold": 0.5
+    },
+    "rolloutStages": [1, 10, 50, 100]
+  }'</pre>
+
+            <p style="margin-top: 15px;"><strong>3. View releases:</strong></p>
+            <pre>curl http://localhost:3000/api/releases</pre>
+
+            <p style="margin-top: 15px;"><strong>Available Endpoints:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li><code>GET /api/health</code> - Health check</li>
+                <li><code>GET /api/releases</code> - List all releases</li>
+                <li><code>POST /api/releases</code> - Create release</li>
+                <li><code>GET /api/releases/:id</code> - Get specific release</li>
+                <li><code>POST /api/releases/:id/blockers</code> - Add blocker</li>
+                <li><code>POST /api/releases/:id/signoffs</code> - Record sign-off</li>
+            </ul>
+
+            <p style="margin-top: 15px;">📖 See <strong>USAGE.md</strong> for complete API documentation</p>
+        </div>
+    </div>
+</body>
+</html>

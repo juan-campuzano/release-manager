@@ -1,0 +1,112 @@
+.releaseCard {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.releaseCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  border-color: #007bff;
+}
+
+.releaseCard:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.platform {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.statusProduction {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.statusCurrent {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.statusUpcoming {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.version,
+.stage,
+.rollout {
+  margin-bottom: 0.75rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: #666;
+  margin-right: 0.5rem;
+}
+
+.value {
+  font-size: 0.875rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.rollout {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rolloutBar {
+  flex: 1;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rolloutProgress {
+  height: 100%;
+  background-color: #007bff;
+  transition: width 0.3s ease;
+}
+
+.rolloutPercentage {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333;
+  min-width: 3rem;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  .releaseCard {
+    padding: 1rem;
+  }
+  
+  .platform {
+    font-size: 1.125rem;
+  }
+}

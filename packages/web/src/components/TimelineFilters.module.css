@@ -1,0 +1,63 @@
+.filters {
+  margin-bottom: 1.5rem;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filterButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.filterButton:hover {
+  background-color: #f5f5f5;
+  border-color: #999;
+}
+
+.filterButton:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.filterButton.active {
+  background-color: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.filterButton.active:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.eventCount {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #555;
+  min-height: 1.25rem;
+}
+
+@media (max-width: 767px) {
+  .buttonGroup {
+    gap: 0.375rem;
+  }
+
+  .filterButton {
+    flex: 1 1 calc(50% - 0.1875rem);
+    min-width: 0;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+  }
+}

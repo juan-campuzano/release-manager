@@ -1,0 +1,144 @@
+/**
+ * EventIcon styles
+ *
+ * Icon sizing: 32px desktop, 24px mobile
+ * Color coding per event type, severity, and status
+ * Requirements: 3.1, 3.4, 4.1, 4.3, 4.4, 5.1, 5.4, 6.1, 7.1, 7.3, 8.1, 8.4, 9.3, 13.2, 15.3, 15.6
+ */
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ---- Event type base colors ---- */
+
+.releaseCreated {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.stageChange {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.blockerAdded {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.blockerResolved {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.signoffRecorded {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.rolloutUpdated {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.distributionUpdated {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.itgcUpdated {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+/* ---- Stage-specific colors ---- */
+
+.stageBranching {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.stageCandidate {
+  background-color: #ede9fe;
+  color: #8b5cf6;
+}
+
+.stageReview {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.stageRollout {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+/* ---- Severity colors ---- */
+
+.severityCritical {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.severityHigh {
+  background-color: #fef3c7;
+  color: #f59e0b;
+}
+
+.severityMedium {
+  background-color: #fef9c3;
+  color: #fcd34d;
+}
+
+/* ---- Distribution status colors ---- */
+
+.statusPending {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+}
+
+.statusSubmitted {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.statusApproved {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.statusLive {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+/* ---- ITGC compliance colors ---- */
+
+.compliant {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+.nonCompliant {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+/* ---- Responsive: mobile ---- */
+
+@media (max-width: 767px) {
+  .icon {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "release-manager-monorepo",
+  "version": "1.0.0",
+  "description": "A comprehensive dashboard application for monitoring and managing software releases across multiple platforms",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/web",
+    "dev:server": "npm run dev --workspace=packages/server",
+    "dev:all": "npm run dev:server & npm run dev",
+    "build": "npm run build --workspaces",
+    "build:server": "npm run build --workspace=packages/server",
+    "build:web": "npm run build --workspace=packages/web",
+    "test": "npm run test --workspaces",
+    "test:server": "npm run test --workspace=packages/server",
+    "test:web": "npm run test --workspace=packages/web",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [
+    "release-management",
+    "dashboard",
+    "devops",
+    "ci-cd",
+    "monorepo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
