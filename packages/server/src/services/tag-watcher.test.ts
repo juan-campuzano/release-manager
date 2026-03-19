@@ -437,7 +437,7 @@ describe('TagWatcher', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when matched release is at final stage', async () => {
+    it('should return match with null targetStage when matched release is at final stage', async () => {
       const release = makeRelease({
         version: '1.0.0',
         currentStage: ReleaseStage.RollOut100Percent,
@@ -448,11 +448,12 @@ describe('TagWatcher', () => {
 
       const result = await watcher.matchTagToRelease('1.0.0', 'https://github.com/org/repo');
 
-      expect(result).toBeNull();
-      expect(config.logger.info).toHaveBeenCalledWith(
-        'Matched release is already at final stage',
-        expect.objectContaining({ releaseId: 'release-1' }),
-      );
+      expect(result).toEqual({
+        releaseId: 'release-1',
+        tagName: '1.0.0',
+        targetStage: null,
+        repositoryUrl: 'https://github.com/org/repo',
+      });
     });
 
     it('should return null when releaseStore fails', async () => {

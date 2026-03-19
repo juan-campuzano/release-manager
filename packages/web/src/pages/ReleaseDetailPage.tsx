@@ -19,7 +19,7 @@ import styles from './ReleaseDetailPage.module.css';
 export function ReleaseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { releaseService, configService, tagStatusService } = useServices();
-  const { release, isLoading, error, refresh } = useRelease(id!, releaseService);
+  const { release, isLoading, isRefreshing, error, refresh } = useRelease(id!, releaseService);
 
   // Determine if tag watching is active based on release configuration
   const isTagWatchingActive = !!(
@@ -123,8 +123,8 @@ export function ReleaseDetailPage() {
 
       <div className={styles.header}>
         <ReleaseHeader release={release} />
-        <button onClick={handleRefresh} className={styles.refreshButton} disabled={isLoading}>
-          {isLoading ? 'Refreshing...' : 'Refresh'}
+        <button onClick={handleRefresh} className={styles.refreshButton} disabled={isRefreshing}>
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 

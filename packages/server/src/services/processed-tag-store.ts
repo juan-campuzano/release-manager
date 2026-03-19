@@ -72,6 +72,21 @@ export class ProcessedTagStore {
     }
     return latest;
   }
+  /**
+   * Get the most recently processed tag record for a specific release.
+   * Returns null if no tags have been processed for the release.
+   */
+  getLatestForRelease(releaseId: string): ProcessedTagRecord | null {
+    let latest: ProcessedTagRecord | null = null;
+    for (const record of this.records.values()) {
+      if (record.releaseId === releaseId) {
+        if (latest === null || record.processedAt > latest.processedAt) {
+          latest = record;
+        }
+      }
+    }
+    return latest;
+  }
 
   /**
    * Export all records for external persistence (e.g., saving to disk).

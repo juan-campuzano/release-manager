@@ -31,7 +31,7 @@ export interface TagWatcherConfig {
 export interface TagMatchResult {
   releaseId: string;
   tagName: string;
-  targetStage: ReleaseStage;
+  targetStage: ReleaseStage | null;
   repositoryUrl: string;
 }
 
@@ -104,11 +104,34 @@ export class TagWatcher {
       // Ensure polling is running for this repository
       this.ensurePolling(release.sourceType, release.repositoryUrl);
 
-      const tracking = this.tagTrackingState.get(releaseId);
+      // Find the latest processed tag for this release by picking the highest semver
+      const allProcessed = this.config.processedTagStore.getProcessedTags(release.repositoryUrl)
+        .filter(r => r.releaseId === releaseId);
+
+      if (allProcessed.length === 0) {
+        return { active: true, lastDetectedTag: null, lastCheckAt: null };
+      }
+
+      // Sort by semver descending: a clean release (1.0.0) is higher than a pre-release (1.0.0-rc.1)
+      allProcessed.sort((a, b) => {
+        const vA = extractVersion(a.tagName) ?? '';
+        const vB = extractVersion(b.tagName) ?? '';
+        const baseA = extractBaseVersion(vA);
+        const baseB = extractBaseVersion(vB);
+        if (baseA !== baseB) return baseA > baseB ? -1 : 1;
+        // Same base version: clean release wins over pre-release
+        const aIsPreRelease = vA.includes('-');
+        const bIsPreRelease = vB.includes('-');
+        if (aIsPreRelease !== bIsPreRelease) return aIsPreRelease ? 1 : -1;
+        // Both pre-release or both clean: use processedAt as tiebreaker
+        return b.processedAt.localeCompare(a.processedAt);
+      });
+
+      const latest = allProcessed[0];
       return {
         active: true,
-        lastDetectedTag: tracking?.lastDetectedTag ?? null,
-        lastCheckAt: tracking?.lastCheckAt ?? null,
+        lastDetectedTag: latest.tagName,
+        lastCheckAt: latest.processedAt,
       };
     }
   /**
@@ -195,12 +218,48 @@ export class TagWatcher {
         tagName: tag.name,
         repositoryUrl,
       });
+      // Ensure tagTrackingState reflects the latest processed tag for this release
+      const processed = this.config.processedTagStore.getProcessedTags(repositoryUrl);
+      const record = processed.find(r => r.tagName === tag.name);
+      if (record) {
+        const existing = this.tagTrackingState.get(record.releaseId);
+        if (!existing || record.processedAt >= existing.lastCheckAt) {
+          this.tagTrackingState.set(record.releaseId, {
+            lastDetectedTag: tag.name,
+            lastCheckAt: record.processedAt,
+          });
+        }
+      }
       return;
     }
 
     const matchResult = await this.matchTagToRelease(version, repositoryUrl);
     if (!matchResult) {
-      return; // No match or already at final stage — logged in matchTagToRelease
+      return; // No match — logged in matchTagToRelease
+    }
+
+    // Always update tracking state when a tag matches a release
+    const now = new Date().toISOString();
+    this.tagTrackingState.set(matchResult.releaseId, {
+      lastDetectedTag: tag.name,
+      lastCheckAt: now,
+    });
+
+    // If already at final stage, mark processed and return — no transition needed
+    if (!matchResult.targetStage) {
+      this.config.logger.info('Matched release is already at final stage', {
+        tagName: tag.name,
+        repositoryUrl,
+        releaseId: matchResult.releaseId,
+      });
+      this.config.processedTagStore.markProcessed({
+        tagName: tag.name,
+        repositoryUrl,
+        processedAt: now,
+        releaseId: matchResult.releaseId,
+        appliedStage: ReleaseStage.RollOut100Percent,
+      });
+      return;
     }
 
     // Validate the transition via StateManager
@@ -255,12 +314,6 @@ export class TagWatcher {
       processedAt,
       releaseId: matchResult.releaseId,
       appliedStage: matchResult.targetStage,
-    });
-
-    // Update internal tracking state for tag status reporting
-    this.tagTrackingState.set(matchResult.releaseId, {
-      lastDetectedTag: tag.name,
-      lastCheckAt: processedAt,
     });
 
     this.config.logger.info('Successfully advanced release stage via tag detection', {
@@ -331,8 +384,9 @@ export class TagWatcher {
 
     const matches = activeReleases.filter(
       (r) => {
-        const baseVersion = extractBaseVersion(version);
-        return (r.version === version || r.version === baseVersion) && r.repositoryUrl === repositoryUrl;
+        const tagBaseVersion = extractBaseVersion(version);
+        const releaseBaseVersion = extractBaseVersion(r.version);
+        return (r.version === version || r.version === tagBaseVersion || releaseBaseVersion === tagBaseVersion) && r.repositoryUrl === repositoryUrl;
       }
     );
 
@@ -355,19 +409,11 @@ export class TagWatcher {
 
     const release = matches[0];
     const targetStage = getNextStage(release.currentStage);
-    if (!targetStage) {
-      this.config.logger.info('Matched release is already at final stage', {
-        version,
-        repositoryUrl,
-        releaseId: release.id,
-      });
-      return null;
-    }
 
     return {
       releaseId: release.id,
       tagName: version,
-      targetStage,
+      targetStage: targetStage ?? null,
       repositoryUrl,
     };
   }

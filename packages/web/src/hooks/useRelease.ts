@@ -5,6 +5,7 @@ import { ReleaseService } from '../services/ReleaseService';
 interface UseReleaseResult {
   release: Release | null;
   isLoading: boolean;
+  isRefreshing: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
   updateStage: (stage: ReleaseStage) => Promise<void>;
@@ -40,9 +41,14 @@ export function useRelease(
 ): UseReleaseResult {
   const [release, setRelease] = useState<Release | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   
   const isMountedRef = useRef<boolean>(true);
+  const releaseRef = useRef<Release | null>(null);
+
+  // Keep releaseRef in sync with release state so fetchRelease can read current value
+  releaseRef.current = release;
 
   const getCacheKey = (id: string): string => {
     return `release:${id}`;
@@ -74,8 +80,14 @@ export function useRelease(
   };
 
   const fetchRelease = useCallback(async (id: string) => {
+    const isBackgroundRefresh = releaseRef.current !== null;
+
     try {
-      setIsLoading(true);
+      if (isBackgroundRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
       
       // Check cache first
@@ -84,6 +96,7 @@ export function useRelease(
         if (isMountedRef.current) {
           setRelease(cachedData);
           setIsLoading(false);
+          setIsRefreshing(false);
         }
         return;
       }
@@ -95,11 +108,17 @@ export function useRelease(
         setRelease(data);
         setCachedData(id, data);
         setIsLoading(false);
+        setIsRefreshing(false);
       }
     } catch (err) {
       if (isMountedRef.current) {
         setError(err instanceof Error ? err : new Error('Failed to fetch release'));
-        setIsLoading(false);
+        if (isBackgroundRefresh) {
+          // Don't overwrite existing release data on background refresh error
+          setIsRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
       }
     }
   }, [releaseService]);
@@ -166,6 +185,11 @@ export function useRelease(
   // Fetch release when releaseId changes
   useEffect(() => {
     if (releaseId) {
+      // When releaseId changes, reset to initial load behavior
+      setRelease(null);
+      releaseRef.current = null; // Sync ref immediately so fetchRelease sees initial load
+      setIsLoading(true);
+      setIsRefreshing(false);
       fetchRelease(releaseId);
     }
   }, [releaseId, fetchRelease]);
@@ -180,6 +204,7 @@ export function useRelease(
   return {
     release,
     isLoading,
+    isRefreshing,
     error,
     refresh,
     updateStage,
