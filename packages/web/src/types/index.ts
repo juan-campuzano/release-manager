@@ -251,8 +251,15 @@ export interface CIExecution {
 // Tag Detection Types
 // ============================================================================
 
+export interface DetectedTag {
+  tagName: string;
+  processedAt: string; // ISO 8601
+  appliedStage: string;
+}
+
 export interface TagDetectionInfo {
   active: boolean;
   lastDetectedTag: string | null;
   lastCheckAt: string | null;
+  detectedTags: DetectedTag[];
 }

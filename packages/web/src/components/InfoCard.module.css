@@ -1,0 +1,44 @@
+.card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.value {
+  color: #1a1a1a;
+  font-size: 0.875rem;
+}
+
+.link {
+  color: #1976d2;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

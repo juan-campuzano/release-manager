@@ -67,3 +67,26 @@
   font-size: 0.875rem;
   color: #d32f2f;
 }
+
+.tagList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tagItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tagItem:last-child {
+  border-bottom: none;
+}
+
+.tagMeta {
+  font-size: 0.8125rem;
+  color: #666;
+}

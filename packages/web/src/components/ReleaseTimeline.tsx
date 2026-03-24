@@ -136,15 +136,6 @@ export const ReleaseTimeline = React.memo(function ReleaseTimeline({
     >
       <div className={styles.header}>
         <h2 className={styles.title}>Timeline</h2>
-        <button
-          type="button"
-          className={styles.refreshButton}
-          onClick={refresh}
-          disabled={loading}
-          aria-label="Refresh timeline"
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
       </div>
       <div className={styles.content}>{renderContent()}</div>
     </div>

@@ -3,17 +3,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { Breadcrumb } from '../components/Breadcrumb';
 import { BackButton } from '../components/BackButton';
 import { ReleaseHeader } from '../components/ReleaseHeader';
-import { ReleaseInfo } from '../components/ReleaseInfo';
-import { StageControl } from '../components/StageControl';
+import { CardGrid } from '../components/CardGrid';
+import { InfoCard } from '../components/InfoCard';
+import type { InfoCardField } from '../components/InfoCard';
 import { PipelineExecutionsPanel } from '../components/PipelineExecutionsPanel';
+import { TagDetectionStatus } from '../components/TagDetectionStatus';
 import { ReleaseTimeline } from '../components/ReleaseTimeline';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { TagDetectionStatus } from '../components/TagDetectionStatus';
 import { useRelease } from '../hooks/useRelease';
 import { useTagStatus } from '../hooks/useTagStatus';
 import { useAutoRefresh } from '../hooks/useAutoRefresh';
 import { useServices } from '../contexts/ServicesContext';
-import type { ReleaseStage, RepositoryConfig } from '../types';
+import { formatDate } from '../utils/formatters';
+import type { RepositoryConfig } from '../types';
 import styles from './ReleaseDetailPage.module.css';
 
 export function ReleaseDetailPage() {
@@ -21,22 +23,10 @@ export function ReleaseDetailPage() {
   const { releaseService, configService, tagStatusService } = useServices();
   const { release, isLoading, isRefreshing, error, refresh } = useRelease(id!, releaseService);
 
-  // Determine if tag watching is active based on release configuration
-  const isTagWatchingActive = !!(
-    release?.repositoryUrl &&
-    release.repositoryUrl.length > 0 &&
-    (release.sourceType === 'github' || release.sourceType === 'azure')
-  );
-
-  const {
-    tagStatus,
-    isLoading: isTagStatusLoading,
-    error: tagStatusError,
-    refresh: refreshTagStatus,
-  } = useTagStatus(id!, tagStatusService, isTagWatchingActive);
-
   const [hasCiPipeline, setHasCiPipeline] = useState(false);
   const [pipelineRefreshTrigger, setPipelineRefreshTrigger] = useState(0);
+
+  const { tagStatus, isLoading: tagLoading, error: tagError } = useTagStatus(id!, tagStatusService, true);
 
   // Determine hasCiPipeline from the release's associated config
   useEffect(() => {
@@ -63,16 +53,10 @@ export function ReleaseDetailPage() {
     return () => { cancelled = true; };
   }, [release?.repositoryConfigId, configService]);
 
-  const handleStageUpdate = useCallback(async (stage: ReleaseStage) => {
-    await releaseService.updateStage(id!, stage);
-    refresh();
-  }, [id, releaseService, refresh]);
-
   const handleRefresh = useCallback(() => {
     refresh();
-    refreshTagStatus();
     setPipelineRefreshTrigger((prev) => prev + 1);
-  }, [refresh, refreshTagStatus]);
+  }, [refresh]);
 
   // Auto-refresh every 30 seconds
   useAutoRefresh(refresh, { interval: 30000, enabled: !isLoading && !error });
@@ -116,6 +100,31 @@ export function ReleaseDetailPage() {
     );
   }
 
+  const versionFields: InfoCardField[] = [
+    { label: 'Version', value: release.version },
+    { label: 'Branch', value: release.branchName },
+    { label: 'Repository', value: release.repositoryUrl, href: release.repositoryUrl },
+    { label: 'Source Type', value: release.sourceType },
+  ];
+
+  const buildFields: InfoCardField[] = [
+    { label: 'Latest Build', value: release.latestBuild },
+    { label: 'Latest Passing Build', value: release.latestPassingBuild },
+    { label: 'Latest App Store Build', value: release.latestAppStoreBuild },
+  ];
+
+  const stateFields: InfoCardField[] = [
+    { label: 'Current Stage', value: release.currentStage },
+    { label: 'Status', value: release.status },
+    { label: 'Rollout Percentage', value: `${release.rolloutPercentage}%` },
+  ];
+
+  const timestampFields: InfoCardField[] = [
+    { label: 'Created', value: formatDate(release.createdAt) },
+    { label: 'Last Updated', value: formatDate(release.updatedAt) },
+    { label: 'Last Synced', value: release.lastSyncedAt ? formatDate(release.lastSyncedAt) : null },
+  ];
+
   return (
     <div className={styles.container}>
       <Breadcrumb />
@@ -128,13 +137,14 @@ export function ReleaseDetailPage() {
         </button>
       </div>
 
-      <ReleaseInfo release={release} />
+      <CardGrid>
+        <InfoCard title="Version Information" fields={versionFields} />
+        <InfoCard title="Build Information" fields={buildFields} />
+        <InfoCard title="Release State" fields={stateFields} />
+        <InfoCard title="Timestamps" fields={timestampFields} />
+      </CardGrid>
 
-      <TagDetectionStatus
-        tagStatus={tagStatus}
-        isLoading={isTagStatusLoading}
-        error={tagStatusError}
-      />
+      <TagDetectionStatus tagStatus={tagStatus} isLoading={tagLoading} error={tagError} />
 
       {hasCiPipeline && (
         <PipelineExecutionsPanel
@@ -143,12 +153,6 @@ export function ReleaseDetailPage() {
           refreshTrigger={pipelineRefreshTrigger}
         />
       )}
-
-      <StageControl
-        releaseId={release.id}
-        currentStage={release.currentStage}
-        onUpdate={handleStageUpdate}
-      />
 
       <ErrorBoundary>
         <ReleaseTimeline releaseId={release.id} />

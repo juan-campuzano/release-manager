@@ -35,10 +35,17 @@ export interface TagMatchResult {
   repositoryUrl: string;
 }
 
+export interface DetectedTag {
+  tagName: string;
+  processedAt: string; // ISO 8601
+  appliedStage: string;
+}
+
 export interface TagDetectionInfo {
   active: boolean;
   lastDetectedTag: string | null;
   lastCheckAt: string | null; // ISO 8601
+  detectedTags: DetectedTag[];
 }
 
 export class TagWatcher {
@@ -90,7 +97,7 @@ export class TagWatcher {
       const result = await this.config.releaseStore.getRelease(releaseId);
 
       if (!result.success) {
-        return { active: false, lastDetectedTag: null, lastCheckAt: null };
+        return { active: false, lastDetectedTag: null, lastCheckAt: null, detectedTags: [] };
       }
 
       const release = result.value;
@@ -98,7 +105,7 @@ export class TagWatcher {
       const hasValidSourceType = release.sourceType === 'github' || release.sourceType === 'azure';
 
       if (!hasRepositoryUrl || !hasValidSourceType) {
-        return { active: false, lastDetectedTag: null, lastCheckAt: null };
+        return { active: false, lastDetectedTag: null, lastCheckAt: null, detectedTags: [] };
       }
 
       // Ensure polling is running for this repository
@@ -109,7 +116,7 @@ export class TagWatcher {
         .filter(r => r.releaseId === releaseId);
 
       if (allProcessed.length === 0) {
-        return { active: true, lastDetectedTag: null, lastCheckAt: null };
+        return { active: true, lastDetectedTag: null, lastCheckAt: null, detectedTags: [] };
       }
 
       // Sort by semver descending: a clean release (1.0.0) is higher than a pre-release (1.0.0-rc.1)
@@ -132,6 +139,11 @@ export class TagWatcher {
         active: true,
         lastDetectedTag: latest.tagName,
         lastCheckAt: latest.processedAt,
+        detectedTags: allProcessed.map(r => ({
+          tagName: r.tagName,
+          processedAt: r.processedAt,
+          appliedStage: r.appliedStage,
+        })),
       };
     }
   /**

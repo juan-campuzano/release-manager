@@ -35,11 +35,7 @@ export { TimelineEmptyState } from './TimelineEmptyState';
 export { TimelineError } from './TimelineError';
 export { PipelineExecutionsPanel } from './PipelineExecutionsPanel';
 export { TagDetectionStatus } from './TagDetectionStatus';
-// Timeline components
-export { ReleaseTimeline } from './ReleaseTimeline';
-export { TimelineEvent } from './TimelineEvent';
-export { TimelineFilters } from './TimelineFilters';
-export { EventIcon } from './EventIcon';
-export { VirtualizedEventList } from './VirtualizedEventList';
-export { TimelineEmptyState } from './TimelineEmptyState';
-export { TimelineError } from './TimelineError';
+export { InfoCard } from './InfoCard';
+export type { InfoCardField, InfoCardProps } from './InfoCard';
+export { CardGrid } from './CardGrid';
+export type { CardGridProps } from './CardGrid';

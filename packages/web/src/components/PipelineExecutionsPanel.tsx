@@ -22,6 +22,15 @@ interface PipelineExecutionsPanelProps {
   refreshTrigger?: number;
 }
 
+export function computeDuration(startedAt: string, completedAt?: string): string {
+  if (!completedAt) return 'In progress';
+  const ms = new Date(completedAt).getTime() - new Date(startedAt).getTime();
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
 const STATUS_CLASS_MAP: Record<CIExecution['status'], string> = {
   pending: styles.statusPending,
   running: styles.statusRunning,
@@ -96,10 +105,9 @@ export function PipelineExecutionsPanel({
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>Run #</th>
+            <th>Action Name</th>
             <th>Status</th>
-            <th>Branch</th>
-            <th>Commit</th>
+            <th>Duration</th>
             <th>Started At</th>
           </tr>
         </thead>
@@ -116,18 +124,23 @@ export function PipelineExecutionsPanel({
                 )}
               </td>
               <td>
-                <span
-                  className={`${styles.statusBadge} ${STATUS_CLASS_MAP[execution.status]}`}
-                >
-                  {execution.status}
-                </span>
+                {execution.status === 'passed' ? (
+                  <span className={styles.statusSuccess}>
+                    <span className={styles.statusIcon} aria-hidden="true">✓</span> Success
+                  </span>
+                ) : execution.status === 'failed' ? (
+                  <span className={styles.statusFailure}>
+                    <span className={styles.statusIcon} aria-hidden="true">✗</span> Failure
+                  </span>
+                ) : (
+                  <span
+                    className={`${styles.statusBadge} ${STATUS_CLASS_MAP[execution.status]}`}
+                  >
+                    {execution.status}
+                  </span>
+                )}
               </td>
-              <td>{execution.branch}</td>
-              <td>
-                <span className={styles.commitSha}>
-                  {execution.commitSha.substring(0, 7)}
-                </span>
-              </td>
+              <td>{computeDuration(execution.startedAt, execution.completedAt)}</td>
               <td>{formatDate(execution.startedAt)}</td>
             </tr>
           ))}

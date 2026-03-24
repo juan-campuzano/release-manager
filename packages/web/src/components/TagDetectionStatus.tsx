@@ -38,6 +38,7 @@ export function TagDetectionStatus({ tagStatus, isLoading, error }: TagDetection
   }
 
   const hasDetectedTag = tagStatus.lastDetectedTag !== null;
+  const detectedTags = tagStatus.detectedTags ?? [];
 
   return (
     <div className={styles.container}>
@@ -46,7 +47,18 @@ export function TagDetectionStatus({ tagStatus, isLoading, error }: TagDetection
         <h3 className={styles.title}>Tag Detection</h3>
       </div>
 
-      {hasDetectedTag ? (
+      {detectedTags.length > 0 ? (
+        <div className={styles.tagList}>
+          {detectedTags.map((tag) => (
+            <div key={tag.tagName} className={styles.tagItem}>
+              <span className={styles.tagName}>{tag.tagName}</span>
+              <span className={styles.tagMeta}>
+                {tag.appliedStage} · {formatDate(tag.processedAt)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : hasDetectedTag ? (
         <>
           <div className={styles.statusItem}>
             <span className={styles.label}>Last Detected Tag</span>
