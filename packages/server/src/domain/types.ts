@@ -428,3 +428,30 @@ export type ReleaseEvent =
 export interface GetEventsResponse {
   events: ReleaseEvent[];
 }
+
+
+// ─── Team Management Types ──────────────────────────────────────────────────
+
+/** Summary of a team for list views */
+export interface TeamSummary {
+  id: string;
+  name: string;
+  memberCount: number;
+}
+
+/** Full team detail including members */
+export interface TeamDetail {
+  id: string;
+  name: string;
+  members: Member[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A member of a team */
+export interface Member {
+  id: string;
+  name: string;
+  email?: string;
+  createdAt: string;
+}

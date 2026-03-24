@@ -11,6 +11,7 @@ import { createHealthRoutes } from './routes/health';
 import { createAuthRoutes } from './routes/auth';
 import { createReleaseRoutes } from './routes/releases';
 import { createConfigRoutes } from './routes/configs';
+import { createTeamRoutes } from './routes/teams';
 import { JSONConfigParser } from './application';
 import { createMetricsRoutes } from './routes/metrics';
 import { errorHandler } from './middleware/error-handler';
@@ -46,6 +47,9 @@ app.use('/api/metrics', createMetricsRoutes(services));
 // Repository configuration routes
 const configParser = new JSONConfigParser();
 app.use('/api/configs', createConfigRoutes(services.configStore, configParser));
+
+// Team management routes
+app.use('/api/teams', createTeamRoutes(services.teamStore));
 
 // Basic route for testing
 app.get('/', (_req, res) => {

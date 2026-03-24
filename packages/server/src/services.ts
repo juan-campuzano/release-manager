@@ -11,6 +11,7 @@ import { HistoryStore } from './data/history-store';
 import { MockDataProvider } from './data/mock-data-provider';
 import { Cache } from './data/cache';
 import { ConfigStore } from './data/config-store';
+import { TeamStore } from './data/team-store';
 import { EventStore } from './services/eventStore';
 import { GitHubAdapter } from './integration';
 import { AzureDevOpsAdapter } from './integration';
@@ -36,6 +37,7 @@ export interface Services {
   eventStore: EventStore;
   pipelineFetcher: PipelineFetcher;
   configStore: ConfigStore;
+  teamStore: TeamStore;
   tagWatcher: TagWatcher;
 }
 
@@ -114,6 +116,7 @@ export function initializeServices(): Services {
 
   // Initialize config store and pipeline fetcher
   const configStore = new ConfigStore();
+  const teamStore = new TeamStore();
   const pipelineFetcher = new PipelineFetcher(
     releaseStore,
     configStore,
@@ -145,6 +148,7 @@ export function initializeServices(): Services {
     eventStore,
     pipelineFetcher,
     configStore,
+    teamStore,
     tagWatcher
   };
 }

@@ -15,6 +15,7 @@ const ReleaseDetailPage = lazy(() => import('./pages/ReleaseDetailPage').then(m 
 const HistoryPage = lazy(() => import('./pages/HistoryPage').then(m => ({ default: m.HistoryPage })));
 const HealthPage = lazy(() => import('./pages/HealthPage').then(m => ({ default: m.HealthPage })));
 const ConfigManagementPage = lazy(() => import('./pages/ConfigManagementPage').then(m => ({ default: m.ConfigManagementPage })));
+const TeamManagementPage = lazy(() => import('./pages/TeamManagementPage').then(m => ({ default: m.TeamManagementPage })));
 
 function App() {
   return (
@@ -73,6 +74,16 @@ function App() {
                       <ProtectedRoute>
                         <Layout>
                           <ConfigManagementPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/teams"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <TeamManagementPage />
                         </Layout>
                       </ProtectedRoute>
                     }
