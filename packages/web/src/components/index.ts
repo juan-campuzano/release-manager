@@ -35,6 +35,7 @@ export { TimelineEmptyState } from './TimelineEmptyState';
 export { TimelineError } from './TimelineError';
 export { PipelineExecutionsPanel } from './PipelineExecutionsPanel';
 export { TagDetectionStatus } from './TagDetectionStatus';
+export { TeamForm } from './TeamForm';
 export { InfoCard } from './InfoCard';
 export type { InfoCardField, InfoCardProps } from './InfoCard';
 export { CardGrid } from './CardGrid';

@@ -8,3 +8,4 @@ export * from './release-store';
 export { HistoryStore, HistorySnapshot, HistoryStoreConfig, HistoryFilters } from './history-store';
 export * from './cache';
 export * from './config-store';
+export * from './team-store';

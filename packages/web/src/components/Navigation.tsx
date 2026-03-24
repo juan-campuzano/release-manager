@@ -67,6 +67,13 @@ export function Navigation() {
           >
             Repo Configs
           </NavLink>
+          <NavLink
+            to="/teams"
+            className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
+            onClick={closeMenu}
+          >
+            Teams
+          </NavLink>
           <button className={styles.logoutButton} onClick={handleLogout}>
             Logout
           </button>

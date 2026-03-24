@@ -6,6 +6,7 @@ import { HealthService } from '../services/HealthService';
 import { ConfigService } from '../services/ConfigService';
 import { PipelineExecutionService } from '../services/PipelineExecutionService';
 import { TagStatusService } from '../services/TagStatusService';
+import { TeamService } from '../services/TeamService';
 
 /**
  * Services available through context
@@ -18,6 +19,7 @@ export interface Services {
   configService: ConfigService;
   pipelineExecutionService: PipelineExecutionService;
   tagStatusService: TagStatusService;
+  teamService: TeamService;
 }
 
 /**
@@ -49,6 +51,7 @@ export function ServicesProvider({ children }: ServicesProviderProps): JSX.Eleme
       configService: new ConfigService(apiClient),
       pipelineExecutionService: new PipelineExecutionService(apiClient),
       tagStatusService: new TagStatusService(apiClient),
+      teamService: new TeamService(apiClient),
     };
   }, []);
 
